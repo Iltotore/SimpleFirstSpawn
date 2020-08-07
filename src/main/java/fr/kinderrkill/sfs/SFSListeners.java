@@ -2,7 +2,9 @@ package fr.kinderrkill.sfs;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -11,36 +13,34 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 public class SFSListeners implements Listener {
 
-	private SimpleFirstSpawn sfs = SimpleFirstSpawn.getInstance();
+	private SpawnManager spawnManager;
+	private ConfigurationSection sfsConfig;
+
+	public SFSListeners(SpawnManager spawnManager, ConfigurationSection sfsConfig) {
+		this.spawnManager = spawnManager;
+		this.sfsConfig = sfsConfig;
+	}
 
 	@EventHandler
 	public void playerJoin(PlayerJoinEvent event) {
 		Player player = event.getPlayer();
 		if(!player.hasPlayedBefore()) {
-			SimpleFirstSpawn.getInstance().manager.teleportToSpawn(player);
-			if(sfs.getConfig().getBoolean("active_first_join_message")) {
+			player.teleport(spawnManager.getSpawn());
+			if(sfsConfig.getBoolean("active_first_join_message")) {
 				event.setJoinMessage(null);
-				String finalMessage = format(sfs.getConfig().getString("player_first_join_message"));
-				if(finalMessage.contains("%player%")) {
-					finalMessage = finalMessage.replaceAll("%player%", player.getName());
-				}
-				for(Player p : Bukkit.getOnlinePlayers()) {
-					p.sendMessage(finalMessage);
-				}
+				String finalMessage = format(sfsConfig.getString("player_first_join_message"), player);
+				for(Player p : Bukkit.getOnlinePlayers()) p.sendMessage(finalMessage);
 			}
-			if(sfs.getConfig().getBoolean("first_join_sound")) {
+			if(sfsConfig.getBoolean("first_join_sound")) {
 				for(Player p : Bukkit.getOnlinePlayers()) {
 					p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 1f);
 				}
 			}
 		} else {
-			if(sfs.getConfig().getBoolean("active_player_join_message")) {
+			if(sfsConfig.getBoolean("active_player_join_message")) {
 				event.setJoinMessage(null);
 				for(Player p : Bukkit.getOnlinePlayers()) {
-					String finalMessage = format(sfs.getConfig().getString("player_join_message"));
-					if(finalMessage.contains("%player%")) {
-						finalMessage = finalMessage.replaceAll("%player%", player.getName());
-					}
+					String finalMessage = format(sfsConfig.getString("player_join_message"), player);
 					p.sendMessage(finalMessage);
 				}
 			}
@@ -49,17 +49,21 @@ public class SFSListeners implements Listener {
 
 	@EventHandler
 	public void playerLeave(PlayerQuitEvent event) {
-		if(sfs.getConfig().getBoolean("active_player_quit_message")) {
+		if(sfsConfig.getBoolean("active_player_quit_message")) {
 			event.setQuitMessage(null);
 			for(Player p : Bukkit.getOnlinePlayers()) {
-				String finalMessage = format(sfs.getConfig().getString("player_quit_message"));
-				finalMessage = finalMessage.replaceAll("%player%", event.getPlayer().getName());
+				String finalMessage = format(sfsConfig.getString("player_quit_message"), event.getPlayer());
 				p.sendMessage(finalMessage);
 			}
 		}
 	}
 
-	private String format(String message) {
+	private String format(String message, OfflinePlayer player) {
+		if(player != null) message = message.replace("%player%", player.getName());
 		return ChatColor.translateAlternateColorCodes('&', message);
+	}
+
+	private String format(String message){
+		return format(message, null);
 	}
 }

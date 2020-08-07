@@ -9,6 +9,8 @@ import static fr.il_totore.manadrop.MinecraftDependencyHelper.spigotApi //On imp
 group = 'fr.kinderrkill'
 version = '1.0'
 
+sourceCompatibility = targetCompatibility = 1.8
+
 repositories { //Les repos nécessaires pour trouver les dépendances de Spigot
     mavenCentral()
     spigotSnapshot()
